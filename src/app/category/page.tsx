@@ -31,6 +31,7 @@ export default function CategoryPage() {
     const [editCard, setEditCard] = useState<CardItem | null>(null);
     const [editQuestion, setEditQuestion] = useState('');
     const [editAnswer, setEditAnswer] = useState('');
+    const [saving, setSaving] = useState(false);
 
     const loadCategories = async () => {
         setLoadingCats(true);
@@ -76,6 +77,29 @@ export default function CategoryPage() {
         setEditCard(card);
         setEditQuestion(card.question);
         setEditAnswer(card.answer);
+    };
+
+    const handleSave = async () => {
+        if (!editCard) return;
+        const q = editQuestion.trim();
+        const a = editAnswer.trim();
+        if (!q || !a) return;
+
+        setSaving(true);
+        const { error } = await supabase
+            .from('cards')
+            .update({ question: q, answer: a })
+            .eq('id', editCard.id);
+        setSaving(false);
+
+        if (error) {
+            notifications.show({ color: 'red', message: error.message });
+            return;
+        }
+
+        notifications.show({ color: 'green', message: 'Card updated' });
+        setEditCard(null);
+        await loadCards();
     };
 
     return (
@@ -130,7 +154,7 @@ export default function CategoryPage() {
                 </Stack>
             </Stack>
 
-            {/* Edit modal (UI only for now) */}
+            {/* Edit modal */}
             <Modal
                 opened={!!editCard}
                 onClose={() => setEditCard(null)}
@@ -154,7 +178,9 @@ export default function CategoryPage() {
                         <Button variant="default" onClick={() => setEditCard(null)}>
                             Cancel
                         </Button>
-                        <Button disabled>Save</Button>
+                        <Button loading={saving} onClick={handleSave}>
+                            Save
+                        </Button>
                     </Group>
                 </Stack>
             </Modal>
