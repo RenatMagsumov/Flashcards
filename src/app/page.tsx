@@ -25,7 +25,11 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    loadCategories();
+
+    const fetchData = async () => {
+      await loadCategories();
+    };
+    fetchData();
   }, []);
 
   return (
