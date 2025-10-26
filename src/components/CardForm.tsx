@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { Button, Group, TextInput, Textarea } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function CardForm() {
     const [question, setQuestion] = useState('');
@@ -14,12 +16,17 @@ export default function CardForm() {
         if (!q || !a) return;
 
         setSubmitting(true);
-        console.log('Create card:', { question: q, answer: a });
+        const { error } = await supabase.from('cards').insert({ question: q, answer: a });
+        setSubmitting(false);
 
-        await new Promise((r) => setTimeout(r, 300));
+        if (error) {
+            notifications.show({ color: 'red', message: error.message });
+            return;
+        }
+
         setQuestion('');
         setAnswer('');
-        setSubmitting(false);
+        notifications.show({ color: 'green', message: 'Card created' });
     };
 
     return (
