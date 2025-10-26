@@ -5,23 +5,13 @@ import { Stack, Title, Text, Card, Group } from '@mantine/core';
 import { supabase } from '@/lib/supabaseClient';
 import CardForm from '@/components/CardForm';
 
-type Category = {
-    id: string;
-    name: string;
-};
-
-type CardItem = {
-    id: string;
-    question: string;
-    answer: string;
-    category_id: string;
-};
+type Category = { id: string; name: string };
+type CardItem = { id: string; question: string; answer: string; category_id: string };
 
 export default function CategoryPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loadingCats, setLoadingCats] = useState(true);
 
-    // prepare cards state (will load from DB in the next step)
     const [cards, setCards] = useState<CardItem[]>([]);
     const [loadingCards, setLoadingCards] = useState(true);
 
@@ -35,9 +25,19 @@ export default function CategoryPage() {
         setLoadingCats(false);
     };
 
+    const loadCards = async () => {
+        setLoadingCards(true);
+        const { data, error } = await supabase
+            .from('cards')
+            .select('*')
+            .order('created_at', { ascending: true });
+        if (!error && data) setCards(data as CardItem[]);
+        setLoadingCards(false);
+    };
+
     useEffect(() => {
         (async () => {
-            await loadCategories();
+            await Promise.all([loadCategories(), loadCards()]);
         })();
     }, []);
 
@@ -54,13 +54,10 @@ export default function CategoryPage() {
                     <Text c="dimmed">No categories yet. Create one on the homepage first.</Text>
                 )}
 
-                {/* Cards list (placeholder; data will be fetched next) */}
                 <Stack mt="lg">
                     <Title order={3}>Cards</Title>
                     {loadingCards && <Text>Loading cards...</Text>}
-                    {!loadingCards && cards.length === 0 && (
-                        <Text c="dimmed">No cards yet</Text>
-                    )}
+                    {!loadingCards && cards.length === 0 && <Text c="dimmed">No cards yet</Text>}
                     {cards.map((c) => {
                         const cat = categories.find((x) => x.id === c.category_id);
                         return (
