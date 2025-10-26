@@ -1,7 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Stack, Title, Text, Card, Group, ActionIcon } from '@mantine/core';
+import {
+    Stack,
+    Title,
+    Text,
+    Card,
+    Group,
+    ActionIcon,
+    Modal,
+    TextInput,
+    Textarea,
+    Button,
+} from '@mantine/core';
 import { IconPencil, IconTrash } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { supabase } from '@/lib/supabaseClient';
@@ -16,6 +27,10 @@ export default function CategoryPage() {
 
     const [cards, setCards] = useState<CardItem[]>([]);
     const [loadingCards, setLoadingCards] = useState(true);
+
+    const [editCard, setEditCard] = useState<CardItem | null>(null);
+    const [editQuestion, setEditQuestion] = useState('');
+    const [editAnswer, setEditAnswer] = useState('');
 
     const loadCategories = async () => {
         setLoadingCats(true);
@@ -57,6 +72,12 @@ export default function CategoryPage() {
         await loadCards();
     };
 
+    const openEdit = (card: CardItem) => {
+        setEditCard(card);
+        setEditQuestion(card.question);
+        setEditAnswer(card.answer);
+    };
+
     return (
         <main>
             <Stack p="lg" gap="sm">
@@ -86,7 +107,11 @@ export default function CategoryPage() {
                                     </Stack>
 
                                     <Group gap="xs">
-                                        <ActionIcon variant="default" aria-label="Edit card">
+                                        <ActionIcon
+                                            variant="default"
+                                            aria-label="Edit card"
+                                            onClick={() => openEdit(c)}
+                                        >
                                             <IconPencil size={16} />
                                         </ActionIcon>
                                         <ActionIcon
@@ -104,6 +129,35 @@ export default function CategoryPage() {
                     })}
                 </Stack>
             </Stack>
+
+            {/* Edit modal (UI only for now) */}
+            <Modal
+                opened={!!editCard}
+                onClose={() => setEditCard(null)}
+                title="Edit Card"
+                centered
+            >
+                <Stack>
+                    <TextInput
+                        label="Question"
+                        value={editQuestion}
+                        onChange={(e) => setEditQuestion(e.currentTarget.value)}
+                    />
+                    <Textarea
+                        label="Answer"
+                        minRows={2}
+                        autosize
+                        value={editAnswer}
+                        onChange={(e) => setEditAnswer(e.currentTarget.value)}
+                    />
+                    <Group justify="end">
+                        <Button variant="default" onClick={() => setEditCard(null)}>
+                            Cancel
+                        </Button>
+                        <Button disabled>Save</Button>
+                    </Group>
+                </Stack>
+            </Modal>
         </main>
     );
 }
