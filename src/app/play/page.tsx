@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Stack, Title, Text, Button, Card, TextInput } from '@mantine/core';
+import { Stack, Title, Text, Button, Card, TextInput, Group } from '@mantine/core';
 import { supabase } from '@/lib/supabaseClient';
 
 type CardItem = {
@@ -17,6 +17,8 @@ export default function PlayPage() {
     const [loading, setLoading] = useState(true);
     const [userAnswer, setUserAnswer] = useState('');
     const [result, setResult] = useState<'correct' | 'wrong' | null>(null);
+
+    const [stats, setStats] = useState({ correct: 0, wrong: 0 });
 
     const loadCards = async () => {
         setLoading(true);
@@ -38,15 +40,27 @@ export default function PlayPage() {
         })();
     }, []);
 
-    const checkAnswer = () => {
+    const saveAttempt = async (cardId: string, userAnswer: string, isCorrect: boolean) => {
+        await supabase.from('attempts').insert({
+            card_id: cardId,
+            user_answer: userAnswer,
+            is_correct: isCorrect,
+        });
+    };
+
+    const checkAnswer = async () => {
         if (!current) return;
         const normalizedUser = userAnswer.trim().toLowerCase();
         const normalizedCorrect = current.answer.trim().toLowerCase();
-        if (normalizedUser === normalizedCorrect) {
-            setResult('correct');
-        } else {
-            setResult('wrong');
-        }
+        const isCorrect = normalizedUser === normalizedCorrect;
+
+        setResult(isCorrect ? 'correct' : 'wrong');
+        setStats((prev) => ({
+            correct: prev.correct + (isCorrect ? 1 : 0),
+            wrong: prev.wrong + (!isCorrect ? 1 : 0),
+        }));
+
+        await saveAttempt(current.id, userAnswer, isCorrect);
     };
 
     const nextCard = () => {
@@ -61,7 +75,12 @@ export default function PlayPage() {
         <main>
             <Stack p="lg" gap="sm" align="center">
                 <Title order={2}>Flashcard Trainer</Title>
-                <Text c="dimmed">Type your answer and check correctness</Text>
+                <Text c="dimmed">Type your answer and track your progress</Text>
+
+                <Group mt="md" gap="xl">
+                    <Text fw={500}>✅ Correct: {stats.correct}</Text>
+                    <Text fw={500}>❌ Wrong: {stats.wrong}</Text>
+                </Group>
 
                 {loading && <Text>Loading cards...</Text>}
                 {!loading && !current && <Text>No cards available</Text>}
