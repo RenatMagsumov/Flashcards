@@ -1,7 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Stack, Title, Text, Button, Card, TextInput, Group } from '@mantine/core';
+import {
+    Stack,
+    Title,
+    Text,
+    Button,
+    Card,
+    TextInput,
+    Group,
+    SegmentedControl,
+} from '@mantine/core';
 import { supabase } from '@/lib/supabaseClient';
 
 type CardItem = {
@@ -17,8 +26,10 @@ export default function PlayPage() {
     const [loading, setLoading] = useState(true);
     const [userAnswer, setUserAnswer] = useState('');
     const [result, setResult] = useState<'correct' | 'wrong' | null>(null);
-
     const [stats, setStats] = useState({ correct: 0, wrong: 0 });
+
+    const [mode, setMode] = useState<'random' | 'sequential'>('random');
+    const [index, setIndex] = useState(0);
 
     const loadCards = async () => {
         setLoading(true);
@@ -27,9 +38,8 @@ export default function PlayPage() {
             .select('*')
             .order('created_at', { ascending: true });
         if (!error && data && data.length > 0) {
-            const shuffled = [...data].sort(() => Math.random() - 0.5);
-            setCards(shuffled);
-            setCurrent(shuffled[0]);
+            setCards(data);
+            setCurrent(data[0]);
         }
         setLoading(false);
     };
@@ -65,8 +75,16 @@ export default function PlayPage() {
 
     const nextCard = () => {
         if (cards.length === 0) return;
-        const nextIndex = Math.floor(Math.random() * cards.length);
-        setCurrent(cards[nextIndex]);
+
+        if (mode === 'random') {
+            const nextIndex = Math.floor(Math.random() * cards.length);
+            setCurrent(cards[nextIndex]);
+        } else {
+            const nextIndex = (index + 1) % cards.length;
+            setIndex(nextIndex);
+            setCurrent(cards[nextIndex]);
+        }
+
         setUserAnswer('');
         setResult(null);
     };
@@ -75,7 +93,20 @@ export default function PlayPage() {
         <main>
             <Stack p="lg" gap="sm" align="center">
                 <Title order={2}>Flashcard Trainer</Title>
-                <Text c="dimmed">Type your answer and track your progress</Text>
+                <Text c="dimmed">Choose your training mode and start practicing!</Text>
+
+                <SegmentedControl
+                    value={mode}
+                    onChange={(v) => {
+                        setMode(v as 'random' | 'sequential');
+                        setIndex(0);
+                        setCurrent(cards[0] ?? null);
+                    }}
+                    data={[
+                        { label: 'Random', value: 'random' },
+                        { label: 'Sequential', value: 'sequential' },
+                    ]}
+                />
 
                 <Group mt="md" gap="xl">
                     <Text fw={500}>✅ Correct: {stats.correct}</Text>
@@ -104,12 +135,12 @@ export default function PlayPage() {
 
                         {result === 'correct' && (
                             <Text c="green" mt="sm">
-                                Correct!
+                                ✅ Correct!
                             </Text>
                         )}
                         {result === 'wrong' && (
                             <Text c="red" mt="sm">
-                                Wrong. Correct answer: {current.answer}
+                                ❌ Wrong. Correct answer: {current.answer}
                             </Text>
                         )}
 
