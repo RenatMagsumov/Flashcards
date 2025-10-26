@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { Button, Group, TextInput } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function CategoryForm() {
     const [name, setName] = useState('');
@@ -12,11 +14,16 @@ export default function CategoryForm() {
         if (!trimmed) return;
 
         setSubmitting(true);
-        console.log('Create category:', trimmed);
-
-        await new Promise((r) => setTimeout(r, 300));
-        setName('');
+        const { error } = await supabase.from('categories').insert({ name: trimmed });
         setSubmitting(false);
+
+        if (error) {
+            notifications.show({ color: 'red', message: error.message });
+            return;
+        }
+
+        setName('');
+        notifications.show({ color: 'green', message: 'Category created' });
     };
 
     return (
