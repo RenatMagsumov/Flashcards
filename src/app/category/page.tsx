@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Stack, Title, Text, Card, Group, ActionIcon } from '@mantine/core';
 import { IconPencil, IconTrash } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
 import { supabase } from '@/lib/supabaseClient';
 import CardForm from '@/components/CardForm';
 
@@ -42,6 +43,20 @@ export default function CategoryPage() {
         })();
     }, []);
 
+    const handleDelete = async (id: string) => {
+        const confirmed = confirm('Are you sure you want to delete this card?');
+        if (!confirmed) return;
+
+        const { error } = await supabase.from('cards').delete().eq('id', id);
+        if (error) {
+            notifications.show({ color: 'red', message: error.message });
+            return;
+        }
+
+        notifications.show({ color: 'green', message: 'Card deleted' });
+        await loadCards();
+    };
+
     return (
         <main>
             <Stack p="lg" gap="sm">
@@ -70,12 +85,16 @@ export default function CategoryPage() {
                                         <Text size="sm">{cat ? cat.name : '—'}</Text>
                                     </Stack>
 
-                                    {/* Actions: UI only for now */}
                                     <Group gap="xs">
                                         <ActionIcon variant="default" aria-label="Edit card">
                                             <IconPencil size={16} />
                                         </ActionIcon>
-                                        <ActionIcon color="red" variant="light" aria-label="Delete card">
+                                        <ActionIcon
+                                            color="red"
+                                            variant="light"
+                                            aria-label="Delete card"
+                                            onClick={() => handleDelete(c.id)}
+                                        >
                                             <IconTrash size={16} />
                                         </ActionIcon>
                                     </Group>
