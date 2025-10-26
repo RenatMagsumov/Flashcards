@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Stack, Title, Text, Card, Group } from '@mantine/core';
+import { Stack, Title, Text, Card, Group, ActionIcon } from '@mantine/core';
+import { IconPencil, IconTrash } from '@tabler/icons-react';
 import { supabase } from '@/lib/supabaseClient';
 import CardForm from '@/components/CardForm';
 
@@ -47,7 +48,6 @@ export default function CategoryPage() {
                 <Title order={2}>All Cards</Title>
                 <Text c="dimmed">Create, edit and delete cards across categories.</Text>
 
-                {/* Refresh cards list after creation */}
                 <CardForm categories={categories} onCreated={loadCards} />
 
                 {loadingCats && <Text>Loading categories...</Text>}
@@ -67,8 +67,18 @@ export default function CategoryPage() {
                                     <Stack gap={4}>
                                         <Text fw={600}>{c.question}</Text>
                                         <Text c="dimmed">{c.answer}</Text>
+                                        <Text size="sm">{cat ? cat.name : '—'}</Text>
                                     </Stack>
-                                    <Text>{cat ? cat.name : '—'}</Text>
+
+                                    {/* Actions: UI only for now */}
+                                    <Group gap="xs">
+                                        <ActionIcon variant="default" aria-label="Edit card">
+                                            <IconPencil size={16} />
+                                        </ActionIcon>
+                                        <ActionIcon color="red" variant="light" aria-label="Delete card">
+                                            <IconTrash size={16} />
+                                        </ActionIcon>
+                                    </Group>
                                 </Group>
                             </Card>
                         );
