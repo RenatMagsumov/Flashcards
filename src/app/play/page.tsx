@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Stack, Title, Text, Button, Card } from '@mantine/core';
+import { Stack, Title, Text, Button, Card, TextInput } from '@mantine/core';
 import { supabase } from '@/lib/supabaseClient';
 
 type CardItem = {
@@ -15,6 +15,8 @@ export default function PlayPage() {
     const [cards, setCards] = useState<CardItem[]>([]);
     const [current, setCurrent] = useState<CardItem | null>(null);
     const [loading, setLoading] = useState(true);
+    const [userAnswer, setUserAnswer] = useState('');
+    const [result, setResult] = useState<'correct' | 'wrong' | null>(null);
 
     const loadCards = async () => {
         setLoading(true);
@@ -36,17 +38,30 @@ export default function PlayPage() {
         })();
     }, []);
 
+    const checkAnswer = () => {
+        if (!current) return;
+        const normalizedUser = userAnswer.trim().toLowerCase();
+        const normalizedCorrect = current.answer.trim().toLowerCase();
+        if (normalizedUser === normalizedCorrect) {
+            setResult('correct');
+        } else {
+            setResult('wrong');
+        }
+    };
+
     const nextCard = () => {
         if (cards.length === 0) return;
         const nextIndex = Math.floor(Math.random() * cards.length);
         setCurrent(cards[nextIndex]);
+        setUserAnswer('');
+        setResult(null);
     };
 
     return (
         <main>
             <Stack p="lg" gap="sm" align="center">
                 <Title order={2}>Flashcard Trainer</Title>
-                <Text c="dimmed">Random training mode</Text>
+                <Text c="dimmed">Type your answer and check correctness</Text>
 
                 {loading && <Text>Loading cards...</Text>}
                 {!loading && !current && <Text>No cards available</Text>}
@@ -56,9 +71,34 @@ export default function PlayPage() {
                         <Text fw={600} size="lg">
                             {current.question}
                         </Text>
-                        <Button mt="md" onClick={nextCard}>
-                            Next Random Card
+
+                        <TextInput
+                            mt="md"
+                            placeholder="Your answer..."
+                            value={userAnswer}
+                            onChange={(e) => setUserAnswer(e.currentTarget.value)}
+                        />
+
+                        <Button mt="md" onClick={checkAnswer}>
+                            Check
                         </Button>
+
+                        {result === 'correct' && (
+                            <Text c="green" mt="sm">
+                                Correct!
+                            </Text>
+                        )}
+                        {result === 'wrong' && (
+                            <Text c="red" mt="sm">
+                                Wrong. Correct answer: {current.answer}
+                            </Text>
+                        )}
+
+                        {result && (
+                            <Button mt="md" variant="light" onClick={nextCard}>
+                                Next Card
+                            </Button>
+                        )}
                     </Card>
                 )}
             </Stack>
