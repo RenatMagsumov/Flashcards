@@ -5,7 +5,11 @@ import { Button, Group, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { supabase } from '@/lib/supabaseClient';
 
-export default function CategoryForm() {
+type Props = {
+    onCreated?: () => void;
+};
+
+export default function CategoryForm({ onCreated }: Props) {
     const [name, setName] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
@@ -24,6 +28,7 @@ export default function CategoryForm() {
 
         setName('');
         notifications.show({ color: 'green', message: 'Category created' });
+        onCreated?.();
     };
 
     return (
