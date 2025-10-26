@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack, Title, Text, Card, Group } from '@mantine/core';
+import { supabase } from '@/lib/supabaseClient';
 import CategoryForm from '@/components/CategoryForm';
 
 type Category = {
@@ -10,24 +11,38 @@ type Category = {
 };
 
 export default function HomePage() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [categories] = useState<Category[]>([]);
+  const loadCategories = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if (!error && data) setCategories(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
 
   return (
     <main>
       <Stack p="lg" gap="sm">
         <Title order={2}>Categories</Title>
-        <Text c="dimmed">categories from database</Text>
-
         <CategoryForm />
 
         <Stack>
-          {categories.length === 0 && <Text c="dimmed">No categories yet</Text>}
+          {loading && <Text>Loading...</Text>}
+          {!loading && categories.length === 0 && (
+            <Text c="dimmed">No categories yet</Text>
+          )}
           {categories.map((c) => (
             <Card key={c.id} withBorder>
               <Group justify="space-between">
                 <Text fw={600}>{c.name}</Text>
-
               </Group>
             </Card>
           ))}
