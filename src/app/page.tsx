@@ -25,18 +25,17 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-
-    const fetchData = async () => {
+    (async () => {
       await loadCategories();
-    };
-    fetchData();
+    })();
   }, []);
 
   return (
     <main>
       <Stack p="lg" gap="sm">
         <Title order={2}>Categories</Title>
-        <CategoryForm />
+
+        <CategoryForm onCreated={loadCategories} />
 
         <Stack>
           {loading && <Text>Loading...</Text>}
