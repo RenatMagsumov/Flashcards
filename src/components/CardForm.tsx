@@ -2,14 +2,17 @@
 
 import { useMemo, useState } from 'react';
 import { Button, Group, TextInput, Textarea, Select } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import { supabase } from '@/lib/supabaseClient';
 
 type Category = { id: string; name: string };
 
 type Props = {
     categories: Category[];
+    onCreated?: () => void;
 };
 
-export default function CardForm({ categories }: Props) {
+export default function CardForm({ categories, onCreated }: Props) {
     const [question, setQuestion] = useState('');
     const [answer, setAnswer] = useState('');
     const [categoryId, setCategoryId] = useState<string | null>(null);
@@ -27,14 +30,23 @@ export default function CardForm({ categories }: Props) {
         if (!q || !a || !cat) return;
 
         setSubmitting(true);
-        // placeholder: will replace with Supabase insert in the next step
-        console.log('Create card:', { question: q, answer: a, category_id: cat });
+        const { error } = await supabase.from('cards').insert({
+            category_id: cat,
+            question: q,
+            answer: a,
+        });
+        setSubmitting(false);
 
-        await new Promise((r) => setTimeout(r, 300));
+        if (error) {
+            notifications.show({ color: 'red', message: error.message });
+            return;
+        }
+
         setQuestion('');
         setAnswer('');
         setCategoryId(null);
-        setSubmitting(false);
+        notifications.show({ color: 'green', message: 'Card created' });
+        onCreated?.();
     };
 
     return (

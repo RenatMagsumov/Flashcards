@@ -36,8 +36,8 @@ export default function CategoryPage() {
                 <Title order={2}>All Cards</Title>
                 <Text c="dimmed">Create, edit and delete cards across categories.</Text>
 
-
-                <CardForm /* categories will be wired next */ />
+                {/* Pass real categories into CardForm */}
+                <CardForm categories={categories} />
 
                 {loadingCats && <Text>Loading categories...</Text>}
                 {!loadingCats && categories.length === 0 && (
